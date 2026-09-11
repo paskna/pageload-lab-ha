@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Dashboard · PageLoad Lab{% endblock %}
+{% block page %}dashboard{% endblock %}
+{% block heading %}Dashboard{% endblock %}
+{% block content %}
+<section class="page-head">
+  <div><p class="eyebrow">Übersicht</p><h1>Systemzustand auf einen Blick</h1><p>Live-Kennzahlen aller kontrollierten Tests.</p></div>
+  <span class="live-pill"><i></i>Live · 5 s</span>
+</section>
+<section class="metric-grid" id="dashboard-cards" aria-busy="true">
+  {% for label in ["Aktive Tests", "Geplante Tests", "Abgeschlossene Tests", "Aufrufe heute", "Aufrufe insgesamt", "Erfolgsquote", "Fehlerquote", "Ø Ladezeit", "P95 Ladezeit", "Aktive Sessions"] %}
+  <article class="metric-card"><span>{{ label }}</span><strong>–</strong><small>Wird geladen</small></article>
+  {% endfor %}
+</section>
+<section class="panel">
+  <div class="panel-head"><div><h2>Aktuelle Tests</h2><p>Zuletzt bearbeitete und laufende Tests</p></div><a href="{{ base_path }}/tests">Alle Tests</a></div>
+  <div class="table-wrap"><table><thead><tr><th>Name</th><th>URL</th><th>Status</th><th>Beginn</th><th>Laufzeit</th><th>Aufrufe</th><th>pro Min.</th><th>Erfolgreich</th><th>Fehler</th><th>Ø Ladezeit</th></tr></thead><tbody id="dashboard-tests"><tr><td colspan="10" class="empty">Daten werden geladen …</td></tr></tbody></table></div>
+</section>
+{% endblock %}

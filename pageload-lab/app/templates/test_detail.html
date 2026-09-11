@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}{{ test.name }} · PageLoad Lab{% endblock %}
+{% block page %}test-detail{% endblock %}
+{% block heading %}Live Report{% endblock %}
+{% block content %}
+<div id="test-detail" data-test-id="{{ test.id }}">
+  <section class="page-head"><div><p class="eyebrow">Test #{{ test.id }}</p><h1 id="detail-name">{{ test.name }}</h1><p class="url-line">{{ test.url }}</p></div><div class="button-row" id="test-controls"><button class="button secondary" data-action="start">Starten</button><button class="button secondary" data-action="pause">Pause</button><button class="button secondary" data-action="resume">Fortsetzen</button><button class="button danger" data-action="stop">Stoppen</button></div></section>
+  <div class="notice info hidden" id="status-message"></div>
+  <section class="metric-grid compact-grid" id="detail-cards"></section>
+  <section class="detail-info-grid"><article class="panel"><div class="panel-head"><h2>Testkonfiguration</h2></div><dl class="report-meta" id="report-meta"></dl></article><article class="panel"><div class="panel-head"><h2>Fehleranalyse</h2></div><dl class="report-meta" id="error-analysis"></dl></article></section>
+  <section class="chart-grid"><article class="panel chart-panel span-2"><div class="panel-head"><div><h2>Ladezeit über Zeit</h2><p>Durchschnitt je Minute</p></div></div><canvas id="chart-load" height="220"></canvas></article><article class="panel chart-panel"><div class="panel-head"><h2>Erfolgreich / Fehler</h2></div><canvas id="chart-success" height="220"></canvas></article><article class="panel chart-panel"><div class="panel-head"><h2>HTTP Status Codes</h2></div><canvas id="chart-status" height="220"></canvas></article><article class="panel chart-panel span-2"><div class="panel-head"><h2>Aufrufe pro Minute</h2></div><canvas id="chart-calls" height="180"></canvas></article></section>
+  <section class="panel"><div class="panel-head"><div><h2>Einzelrequests</h2><p>Paginiert, 50 Datensätze pro Seite</p></div><div class="button-row"><a class="button secondary compact" href="{{ base_path }}/api/tests/{{ test.id }}/export/csv">CSV</a><a class="button secondary compact" href="{{ base_path }}/api/tests/{{ test.id }}/export/json">JSON</a></div></div><div class="table-wrap"><table><thead><tr><th>Zeit</th><th>Status</th><th>Ladezeit</th><th>TTFB</th><th>Aufenthalt</th><th>Proxy</th><th>Fehler</th></tr></thead><tbody id="requests-table"></tbody></table></div><div class="pagination"><button class="button secondary compact" id="page-prev">Zurück</button><span id="page-label">Seite 1</span><button class="button secondary compact" id="page-next">Weiter</button></div></section>
+</div>
+{% endblock %}

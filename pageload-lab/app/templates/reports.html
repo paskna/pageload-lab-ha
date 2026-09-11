@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}Reports · PageLoad Lab{% endblock %}
+{% block page %}reports{% endblock %}
+{% block heading %}Reports{% endblock %}
+{% block content %}
+<section class="page-head"><div><p class="eyebrow">Auswertung</p><h1>Gespeicherte Reports</h1><p>Filtere Testläufe und öffne Kennzahlen, Diagramme oder Exporte.</p></div></section>
+<section class="panel"><form class="toolbar report-filters" id="report-filters"><label class="field"><span>Von</span><input type="date" name="date_from"></label><label class="field"><span>Bis</span><input type="date" name="date_to"></label><label class="field"><span>Test</span><input type="search" name="name" placeholder="Testname"></label><label class="field"><span>URL</span><input type="search" name="url" placeholder="example.ch"></label><label class="field"><span>Status</span><select name="status"><option value="">Alle Status</option><option value="running">Läuft</option><option value="completed">Beendet</option><option value="stopped">Abgebrochen</option><option value="error">Fehler</option><option value="interrupted">Unterbrochen</option></select></label><button class="button secondary" type="submit">Filtern</button></form>
+<div class="table-wrap"><table><thead><tr><th>Test</th><th>URL</th><th>Start</th><th>Ende</th><th>Status</th><th>Gesamt</th><th>Erfolgsquote</th><th>Ø</th><th>Export</th></tr></thead><tbody id="reports-table"><tr><td colspan="9" class="empty">Reports werden geladen …</td></tr></tbody></table></div></section>
+{% endblock %}

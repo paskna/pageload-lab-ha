@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Tests · PageLoad Lab{% endblock %}
+{% block page %}tests{% endblock %}
+{% block heading %}Tests{% endblock %}
+{% block content %}
+<section class="page-head"><div><p class="eyebrow">Historie</p><h1>Tests verwalten</h1><p>Konfigurationen, Laufstatus und Ergebnisse.</p></div><a class="button primary" href="{{ base_path }}/tests/new">＋ Test erstellen</a></section>
+<section class="panel">
+  <div class="toolbar"><label class="search"><span>⌕</span><input id="test-search" type="search" placeholder="Name oder URL filtern"></label><select id="test-status-filter" aria-label="Status filtern"><option value="">Alle Status</option><option value="running">Läuft</option><option value="scheduled">Geplant</option><option value="paused">Pausiert</option><option value="completed">Beendet</option><option value="stopped">Abgebrochen</option><option value="error">Fehler</option><option value="interrupted">Unterbrochen</option></select></div>
+  <div class="table-wrap"><table><thead><tr><th>Name</th><th>URL</th><th>Beginn</th><th>Ende</th><th>Status</th><th>Aufrufe</th><th>Erfolgsquote</th><th>Ø Ladezeit</th><th class="actions-head">Aktionen</th></tr></thead><tbody id="tests-table"><tr><td colspan="9" class="empty">Daten werden geladen …</td></tr></tbody></table></div>
+</section>
+{% endblock %}

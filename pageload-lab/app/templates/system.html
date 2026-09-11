@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}System · PageLoad Lab{% endblock %}
+{% block page %}system{% endblock %}
+{% block heading %}System{% endblock %}
+{% block content %}
+<section class="page-head"><div><p class="eyebrow">Diagnose</p><h1>Systemstatus</h1><p>Runtime, Datenbank, Speicher und Browser Engine.</p></div><span class="live-pill"><i></i>Live · 10 s</span></section>
+<section class="system-grid" id="system-grid"><article class="panel empty">Systeminformationen werden geladen …</article></section>
+<section class="panel"><div class="panel-head"><div><h2>Wartung</h2><p>Sichere administrative Aktionen</p></div></div><div class="button-row"><button class="button secondary" id="db-check">Datenbank prüfen</button><button class="button secondary" id="cleanup">Alte Requests bereinigen</button><a class="button secondary" href="{{ base_path }}/api/system/logs">Logs herunterladen</a></div><p class="muted">Die Bereinigung verwendet die konfigurierte Aufbewahrungsfrist. Testkonfigurationen und aggregierte Report-Snapshots bleiben erhalten.</p></section>
+{% endblock %}

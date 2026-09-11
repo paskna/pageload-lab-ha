@@ -1,0 +1,107 @@
+name: Build PageLoad Lab
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+    tags: ['v*']
+  release:
+    types: [published]
+
+env:
+  ARCHITECTURES: '["amd64", "aarch64"]'
+  IMAGE_NAME: pageload-lab
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: |
+            pageload-lab/requirements.txt
+            pageload-lab/requirements-dev.txt
+      - name: Install dependencies
+        working-directory: pageload-lab
+        run: pip install -r requirements.txt -r requirements-dev.txt
+      - name: Install Chromium for integration tests
+        working-directory: pageload-lab
+        run: python -m playwright install --with-deps chromium
+      - name: Run unit and browser integration tests
+        working-directory: pageload-lab
+        run: pytest --cov=app --cov-report=term-missing
+
+  init:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+      publish: ${{ steps.values.outputs.publish }}
+      version: ${{ steps.values.outputs.version }}
+    steps:
+      - uses: actions/checkout@v6
+      - id: matrix
+        uses: home-assistant/builder/actions/prepare-multi-arch-matrix@4de35182ce1e329181bffcbcc84d33db5e2c7e10 # 2026.06.0
+        with:
+          architectures: ${{ env.ARCHITECTURES }}
+          image-name: ${{ env.IMAGE_NAME }}
+      - id: values
+        shell: bash
+        run: |
+          version="$(python3 -c "import yaml; print(yaml.safe_load(open('pageload-lab/config.yaml'))['version'])")"
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          if [[ "${GITHUB_EVENT_NAME}" == "release" ]]; then
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  build:
+    name: Build ${{ matrix.arch }}
+    needs: [tests, init]
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
+      id-token: write
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.init.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v6
+      - name: Build architecture image
+        uses: home-assistant/builder/actions/build-image@4de35182ce1e329181bffcbcc84d33db5e2c7e10 # 2026.06.0
+        with:
+          arch: ${{ matrix.arch }}
+          container-registry-password: ${{ secrets.GITHUB_TOKEN }}
+          context: ./pageload-lab
+          image: ${{ matrix.image }}
+          image-tags: |
+            ${{ needs.init.outputs.version }}
+            latest
+          push: ${{ needs.init.outputs.publish }}
+          version: ${{ needs.init.outputs.version }}
+
+  manifest:
+    name: Publish multi-architecture manifest
+    needs: [init, build]
+    if: needs.init.outputs.publish == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      packages: write
+    steps:
+      - name: Publish manifest
+        uses: home-assistant/builder/actions/publish-multi-arch-manifest@4de35182ce1e329181bffcbcc84d33db5e2c7e10 # 2026.06.0
+        with:
+          architectures: ${{ env.ARCHITECTURES }}
+          container-registry-password: ${{ secrets.GITHUB_TOKEN }}
+          image-name: ${{ env.IMAGE_NAME }}
+          image-tags: |
+            ${{ needs.init.outputs.version }}
+            latest

@@ -1,0 +1,35 @@
+name: PageLoad Lab
+version: 0.1.0
+slug: pageload_lab
+description: Kontrollierte Browser- und HTTP-Ladetests für autorisierte Websites
+url: https://github.com/paskna/pageload-lab-ha
+image: ghcr.io/paskna/pageload-lab
+arch:
+  - aarch64
+  - amd64
+startup: application
+boot: auto
+init: true
+ingress: true
+ingress_port: 8099
+ingress_stream: true
+watchdog: http://[HOST]:[PORT:8099]/health
+panel_icon: mdi:speedometer
+panel_title: PageLoad Lab
+panel_admin: true
+apparmor: true
+backup: cold
+ports: {}
+ports_description: {}
+host_network: false
+hassio_api: false
+homeassistant_api: false
+auth_api: false
+docker_api: false
+full_access: false
+privileged: []
+map: []
+options:
+  log_level: info
+schema:
+  log_level: list(debug|info|warning|error)

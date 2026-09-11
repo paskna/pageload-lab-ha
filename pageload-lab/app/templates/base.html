@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <meta name="pageload-csrf" content="{{ csrf_token }}">
+  <base href="{{ base_path }}/">
+  <title>{% block title %}PageLoad Lab{% endblock %}</title>
+  <link rel="stylesheet" href="{{ base_path }}/static/app.css">
+</head>
+<body data-page="{% block page %}base{% endblock %}">
+  <aside class="sidebar" id="sidebar">
+    <a class="brand" href="{{ base_path }}/" aria-label="PageLoad Lab Dashboard">
+      <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span>
+      <span><strong>PageLoad</strong><small>LAB</small></span>
+    </a>
+    <nav aria-label="Hauptnavigation">
+      <a class="{{ 'active' if active == 'dashboard' else '' }}" href="{{ base_path }}/"><span>⌂</span>Dashboard</a>
+      <a class="{{ 'active' if active == 'tests' else '' }}" href="{{ base_path }}/tests"><span>◫</span>Tests</a>
+      <a class="{{ 'active' if active == 'new' else '' }}" href="{{ base_path }}/tests/new"><span>＋</span>Neuer Test</a>
+      <a class="{{ 'active' if active == 'reports' else '' }}" href="{{ base_path }}/reports"><span>⌁</span>Reports</a>
+      <a class="{{ 'active' if active == 'proxies' else '' }}" href="{{ base_path }}/proxies"><span>⇄</span>Proxy Pool</a>
+      <a class="{{ 'active' if active == 'settings' else '' }}" href="{{ base_path }}/settings"><span>⚙</span>Einstellungen</a>
+      <a class="{{ 'active' if active == 'system' else '' }}" href="{{ base_path }}/system"><span>◉</span>System</a>
+    </nav>
+    <div class="sidebar-foot"><span class="health-dot"></span>Version {{ version }}</div>
+  </aside>
+  <div class="shell">
+    <header class="topbar">
+      <button class="icon-button menu-button" id="menu-button" aria-label="Navigation öffnen" aria-expanded="false">☰</button>
+      <div><strong>{% block heading %}PageLoad Lab{% endblock %}</strong><small>Autorisierte Performance-Tests</small></div>
+      <a class="button primary compact" href="{{ base_path }}/tests/new">Neuer Test</a>
+    </header>
+    <main class="content">{% block content %}{% endblock %}</main>
+  </div>
+  <div class="sidebar-scrim" id="sidebar-scrim"></div>
+  <div class="toast-region" id="toasts" aria-live="polite"></div>
+  <script src="{{ base_path }}/static/app.js" defer></script>
+</body>
+</html>
