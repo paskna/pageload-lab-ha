@@ -55,6 +55,7 @@ profile pageload_lab flags=(attach_disconnected,mediate_deleted) {
   /dev/shm/** rwk,
   /tmp/** rwk,
   /data rw,
+  /data/ rw,
   /data/** rwk,
 
   capability setgid,
