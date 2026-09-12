@@ -135,6 +135,12 @@ jobs:
             --tmpfs /data \
             --entrypoint /usr/local/bin/python3.12 pageload-lab:smoke -c \
             'from app.settings import Paths,SettingsStore; from app.database import Database; from app.security import SecretBox,load_or_create_secret; p=Paths.from_environment(); p.ensure(); d=Database(p.database); d.initialize(); SettingsStore(d.session_factory).ensure_defaults(); SecretBox(p.secret_key); load_or_create_secret(p.csrf_secret); d.close()'
+      - name: Import BrowserEngine module under AppArmor
+        run: |
+          docker run --rm --security-opt apparmor=pageload_lab \
+            --tmpfs /data \
+            --entrypoint /usr/local/bin/python3.12 pageload-lab:smoke -c \
+            'from app.browser import BrowserEngine'
       - name: Run BrowserEngine lifecycle under AppArmor
         run: |
           docker run --rm --security-opt apparmor=pageload_lab \
