@@ -73,11 +73,10 @@ jobs:
             'mkdir -p /data/reports /data/logs && chmod 0700 /data && test -d /data/reports && test -d /data/logs'
       - name: Start container under PageLoad Lab AppArmor profile
         run: |
-          docker volume create pageload-lab-smoke-data
           docker run --detach --name pageload-lab-smoke \
             --security-opt apparmor=pageload_lab \
             --publish 127.0.0.1:8099:8099 \
-            --volume pageload-lab-smoke-data:/data \
+            --tmpfs /data \
             pageload-lab:smoke
       - name: Verify entrypoint remains running
         run: |
@@ -112,7 +111,6 @@ jobs:
         if: always()
         run: |
           docker rm --force pageload-lab-smoke 2>/dev/null || true
-          docker volume rm pageload-lab-smoke-data 2>/dev/null || true
           sudo apparmor_parser --remove pageload_lab 2>/dev/null || true
 
   init:
