@@ -65,26 +65,31 @@ jobs:
             --publish 127.0.0.1:8099:8099 \
             --volume pageload-lab-smoke-data:/data \
             pageload-lab:smoke
-      - name: Verify Uvicorn, health endpoint and Chromium
+      - name: Verify Uvicorn on port 8099
         run: |
+          health_ready=false
           for attempt in $(seq 1 60); do
             if curl --fail --silent http://127.0.0.1:8099/health > health.json; then
+              health_ready=true
               break
             fi
             if ! docker inspect --format '{{.State.Running}}' pageload-lab-smoke | grep --quiet true; then
-              docker logs pageload-lab-smoke
-              exit 1
+              false
             fi
             sleep 2
           done
-          python3 -c "import json; h=json.load(open('health.json')); assert h['status']=='healthy', h; assert h['backend'] and h['database'] and h['scheduler'], h; assert h['browser_engine']['available'], h"
+          test "$health_ready" = true
+      - name: Verify database and scheduler health
+        run: jq --exit-status '.backend and .database and .scheduler' health.json >/dev/null
+      - name: Verify Playwright Chromium health
+        run: |
+          jq --exit-status '.status == "healthy" and .browser_engine.available' health.json >/dev/null
           curl --fail --silent http://127.0.0.1:8099/api/system > system.json
-          python3 -c "import json; s=json.load(open('system.json')); assert s['chromium_version'] and s['chromium_version'] != 'Nicht verfügbar', s"
+          jq --exit-status '.chromium_version and .chromium_version != "Nicht verfügbar"' system.json >/dev/null
       - name: Verify graceful SIGTERM shutdown
         run: |
           docker kill --signal=TERM pageload-lab-smoke
           test "$(docker wait pageload-lab-smoke)" = "0"
-          docker logs pageload-lab-smoke
       - name: Clean up smoke-test resources
         if: always()
         run: |
