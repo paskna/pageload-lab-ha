@@ -81,6 +81,30 @@ jobs:
           docker run --rm --security-opt apparmor=pageload_lab --tmpfs /data \
             --entrypoint /bin/sh pageload-lab:smoke -c \
             'mkdir -p /data/reports /data/logs && chmod 0700 /data && test -d /data/reports && test -d /data/logs'
+      - name: Initialize application paths and logging under AppArmor
+        run: |
+          docker run --rm --security-opt apparmor=pageload_lab \
+            --env PAGELAB_DATA_DIR=/tmp/pageload-lab-component \
+            --entrypoint /usr/local/bin/python3.12 pageload-lab:smoke -c \
+            'from app.settings import Paths; from app.logging_config import configure_logging; p=Paths.from_environment(); p.ensure(); configure_logging(p.logs)'
+      - name: Initialize SQLite under AppArmor
+        run: |
+          docker run --rm --security-opt apparmor=pageload_lab \
+            --env PAGELAB_DATA_DIR=/tmp/pageload-lab-component \
+            --entrypoint /usr/local/bin/python3.12 pageload-lab:smoke -c \
+            'from app.settings import Paths; from app.database import Database; p=Paths.from_environment(); p.ensure(); d=Database(p.database); d.initialize(); d.close()'
+      - name: Initialize settings and secrets under AppArmor
+        run: |
+          docker run --rm --security-opt apparmor=pageload_lab \
+            --env PAGELAB_DATA_DIR=/tmp/pageload-lab-component \
+            --entrypoint /usr/local/bin/python3.12 pageload-lab:smoke -c \
+            'from app.settings import Paths,SettingsStore; from app.database import Database; from app.security import SecretBox,load_or_create_secret; p=Paths.from_environment(); p.ensure(); d=Database(p.database); d.initialize(); SettingsStore(d.session_factory).ensure_defaults(); SecretBox(p.secret_key); load_or_create_secret(p.csrf_secret); d.close()'
+      - name: Run FastAPI lifespan under AppArmor
+        run: |
+          docker run --rm --security-opt apparmor=pageload_lab \
+            --env PAGELAB_DATA_DIR=/tmp/pageload-lab-component \
+            --entrypoint /usr/local/bin/python3.12 pageload-lab:smoke -c \
+            $'import asyncio\nfrom app.main import app, lifespan\nasync def check():\n    async with lifespan(app):\n        assert app.state.scheduler.status()["running"]\n        assert (await app.state.browser.health())["available"]\nasyncio.run(check())'
       - name: Verify entrypoint baseline without custom AppArmor
         run: |
           docker run --detach --name pageload-lab-baseline \
