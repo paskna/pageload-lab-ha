@@ -81,6 +81,15 @@ jobs:
           docker run --rm --security-opt apparmor=pageload_lab --tmpfs /data \
             --entrypoint /bin/sh pageload-lab:smoke -c \
             'mkdir -p /data/reports /data/logs && chmod 0700 /data && test -d /data/reports && test -d /data/logs'
+      - name: Verify entrypoint baseline without custom AppArmor
+        run: |
+          docker run --detach --name pageload-lab-baseline \
+            --security-opt apparmor=unconfined \
+            --env PAGELAB_DATA_DIR=/tmp/pageload-lab-data \
+            pageload-lab:smoke
+          sleep 5
+          test "$(docker inspect --format '{{.State.Running}}' pageload-lab-baseline)" = "true"
+          docker rm --force pageload-lab-baseline
       - name: Start entrypoint with temporary data under AppArmor
         run: |
           docker run --detach --name pageload-lab-temp-data \
@@ -88,6 +97,10 @@ jobs:
             --env PAGELAB_DATA_DIR=/tmp/pageload-lab-data \
             pageload-lab:smoke
           sleep 5
+      - name: Verify entrypoint execution was permitted
+        run: test "$(docker inspect --format '{{.State.ExitCode}}' pageload-lab-temp-data)" != "126"
+      - name: Verify profiled entrypoint remains running
+        run: |
           test "$(docker inspect --format '{{.State.Running}}' pageload-lab-temp-data)" = "true"
           docker rm --force pageload-lab-temp-data
       - name: Start container under PageLoad Lab AppArmor profile
@@ -130,6 +143,7 @@ jobs:
       - name: Clean up smoke-test resources
         if: always()
         run: |
+          docker rm --force pageload-lab-baseline 2>/dev/null || true
           docker rm --force pageload-lab-temp-data 2>/dev/null || true
           docker rm --force pageload-lab-smoke 2>/dev/null || true
           docker volume rm pageload-lab-smoke-data 2>/dev/null || true
