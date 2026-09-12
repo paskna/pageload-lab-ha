@@ -71,6 +71,11 @@ jobs:
           docker run --rm --security-opt apparmor=pageload_lab --tmpfs /data \
             --entrypoint /bin/sh pageload-lab:smoke -c \
             'mkdir -p /data/reports /data/logs && chmod 0700 /data && test -d /data/reports && test -d /data/logs'
+      - name: Initialize BrowserEngine from persistent settings under AppArmor
+        run: |
+          docker run --rm --security-opt apparmor=pageload_lab --tmpfs /data \
+            --entrypoint /usr/local/bin/python3.12 pageload-lab:smoke -c \
+            $'import asyncio\nfrom app.browser import BrowserEngine\nfrom app.database import Database\nfrom app.settings import Paths, SettingsStore\nasync def check():\n    paths = Paths.from_environment()\n    paths.ensure()\n    database = Database(paths.database)\n    database.initialize()\n    settings = SettingsStore(database.session_factory)\n    settings.ensure_defaults()\n    browser = BrowserEngine(settings)\n    await asyncio.wait_for(browser.start(), 30)\n    assert browser.started and browser._browser and browser._browser.is_connected()\n    await asyncio.wait_for(browser.stop(), 30)\n    database.close()\nasyncio.run(check())'
       - name: Start container under PageLoad Lab AppArmor profile
         run: |
           docker volume create pageload-lab-smoke-data
