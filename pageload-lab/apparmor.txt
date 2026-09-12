@@ -34,6 +34,8 @@ profile pageload_lab flags=(attach_disconnected,mediate_deleted) {
   /ms-playwright/**/chrome-headless-shell rix,
   /ms-playwright/**/chrome_crashpad_handler rix,
 
+  /opt/pageload-lab/ r,
+  /opt/pageload-lab/**/ r,
   /opt/pageload-lab/** r,
   /ms-playwright/** rm,
   /usr/local/lib/** rm,
