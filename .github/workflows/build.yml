@@ -57,6 +57,25 @@ jobs:
         run: |
           docker run --rm --entrypoint /usr/local/bin/python3.12 pageload-lab:smoke -c \
             "import os; paths=['/opt/pageload-lab/run.sh','/usr/bin/env','/bin/sh','/usr/local/bin/python3.12','/usr/local/bin/uvicorn','/usr/local/lib/python3.12/site-packages/playwright/driver/node']; assert all(os.path.isfile(p) and os.access(p, os.X_OK) for p in paths); assert any(os.access(p, os.X_OK) for root, _, files in os.walk('/ms-playwright') for name in ('chrome','headless_shell','chrome-headless-shell') if (p := os.path.join(root, name)) in [os.path.join(root, f) for f in files])"
+      - name: Execute env under AppArmor
+        run: docker run --rm --security-opt apparmor=pageload_lab --entrypoint /usr/bin/env pageload-lab:smoke --version >/dev/null
+      - name: Execute shell under AppArmor
+        run: docker run --rm --security-opt apparmor=pageload_lab --entrypoint /bin/sh pageload-lab:smoke -c 'exit 0'
+      - name: Execute data setup commands under AppArmor
+        run: |
+          docker run --rm --security-opt apparmor=pageload_lab --entrypoint /usr/bin/mkdir pageload-lab:smoke --version >/dev/null
+          docker run --rm --security-opt apparmor=pageload_lab --entrypoint /usr/bin/chmod pageload-lab:smoke --version >/dev/null
+      - name: Execute Python and Uvicorn under AppArmor
+        run: |
+          docker run --rm --security-opt apparmor=pageload_lab --entrypoint /usr/local/bin/python3.12 pageload-lab:smoke --version
+          docker run --rm --security-opt apparmor=pageload_lab --entrypoint /usr/local/bin/uvicorn pageload-lab:smoke --version
+      - name: Execute Playwright Node under AppArmor
+        run: docker run --rm --security-opt apparmor=pageload_lab --entrypoint /usr/local/lib/python3.12/site-packages/playwright/driver/node pageload-lab:smoke --version
+      - name: Start and stop Chromium under AppArmor
+        run: |
+          docker run --rm --security-opt apparmor=pageload_lab \
+            --entrypoint /usr/local/bin/python3.12 pageload-lab:smoke -c \
+            $'import asyncio\nfrom playwright.async_api import async_playwright\nasync def check():\n    p = await async_playwright().start()\n    b = await p.chromium.launch(headless=True, args=["--no-sandbox", "--disable-setuid-sandbox"])\n    assert b.is_connected()\n    await b.close()\n    await p.stop()\nasyncio.run(check())'
       - name: Start container under PageLoad Lab AppArmor profile
         run: |
           docker volume create pageload-lab-smoke-data
@@ -65,6 +84,10 @@ jobs:
             --publish 127.0.0.1:8099:8099 \
             --volume pageload-lab-smoke-data:/data \
             pageload-lab:smoke
+      - name: Verify entrypoint remains running
+        run: |
+          sleep 5
+          test "$(docker inspect --format '{{.State.Running}}' pageload-lab-smoke)" = "true"
       - name: Verify Uvicorn on port 8099
         run: |
           health_ready=false
