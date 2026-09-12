@@ -76,6 +76,20 @@ jobs:
           docker run --rm --security-opt apparmor=pageload_lab \
             --entrypoint /usr/local/bin/python3.12 pageload-lab:smoke -c \
             $'import asyncio\nfrom playwright.async_api import async_playwright\nasync def check():\n    p = await async_playwright().start()\n    b = await p.chromium.launch(headless=True, args=["--no-sandbox", "--disable-setuid-sandbox"])\n    assert b.is_connected()\n    await b.close()\n    await p.stop()\nasyncio.run(check())'
+      - name: Create persistent data layout under AppArmor
+        run: |
+          docker run --rm --security-opt apparmor=pageload_lab --tmpfs /data \
+            --entrypoint /bin/sh pageload-lab:smoke -c \
+            'mkdir -p /data/reports /data/logs && chmod 0700 /data && test -d /data/reports && test -d /data/logs'
+      - name: Start entrypoint with temporary data under AppArmor
+        run: |
+          docker run --detach --name pageload-lab-temp-data \
+            --security-opt apparmor=pageload_lab \
+            --env PAGELAB_DATA_DIR=/tmp/pageload-lab-data \
+            pageload-lab:smoke
+          sleep 5
+          test "$(docker inspect --format '{{.State.Running}}' pageload-lab-temp-data)" = "true"
+          docker rm --force pageload-lab-temp-data
       - name: Start container under PageLoad Lab AppArmor profile
         run: |
           docker volume create pageload-lab-smoke-data
@@ -116,6 +130,7 @@ jobs:
       - name: Clean up smoke-test resources
         if: always()
         run: |
+          docker rm --force pageload-lab-temp-data 2>/dev/null || true
           docker rm --force pageload-lab-smoke 2>/dev/null || true
           docker volume rm pageload-lab-smoke-data 2>/dev/null || true
           sudo apparmor_parser --remove pageload_lab 2>/dev/null || true
