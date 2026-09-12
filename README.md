@@ -26,7 +26,7 @@ No SSH access or Python installation on Home Assistant OS is required. Applicati
 
 ## Images and architectures
 
-- Version: `0.1.0`
+- Version: `0.1.1`
 - Image: `ghcr.io/paskna/pageload-lab`
 - Architectures: `aarch64`, `amd64`
 - Primary target: Home Assistant OS on Raspberry Pi 5 (ARM64)

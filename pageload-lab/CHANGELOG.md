@@ -2,6 +2,15 @@
 
 Alle wesentlichen Änderungen werden nach Keep-a-Changelog-Grundsätzen dokumentiert. Das Projekt verwendet Semantic Versioning.
 
+## 0.1.1 – 2026-09-12
+
+### Fixed
+
+- Home-Assistant-Startfehler durch fehlendes AppArmor-Ausführungsrecht für `run.sh` behoben.
+- Ausschließlich die erforderlichen Einstiegspunkt-, Python-, Uvicorn-, Playwright-Node- und Chromium-Pfade zur Ausführung zugelassen.
+- Pauschale Ausführungsrechte unter `/usr`, `/bin`, `/lib` und `/sbin` durch eng begrenzte Lese- und Library-Mapping-Rechte ersetzt.
+- Strikte Container-Isolation ohne zusätzliche Home-Assistant-, Host-, Docker- oder privilegierte Rechte beibehalten.
+
 ## 0.1.0 – 2026-09-11
 
 ### Added

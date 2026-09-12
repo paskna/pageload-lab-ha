@@ -8,12 +8,45 @@ profile pageload_lab flags=(attach_disconnected,mediate_deleted) {
   network inet6 stream,
   network unix stream,
 
+  # Runtime entrypoint and its direct command chain. Exact execute rules are
+  # grouped before the broader read-only rules below for auditability; AppArmor
+  # combines matching permissions independently of textual rule order.
+  /opt/pageload-lab/run.sh rix,
+  /usr/bin/env rix,
+  /bin/sh rix,
+  /usr/bin/sh rix,
+  /bin/dash rix,
+  /usr/bin/dash rix,
+  /usr/bin/mkdir rix,
+  /bin/mkdir rix,
+  /usr/bin/chmod rix,
+  /bin/chmod rix,
+  /usr/local/bin/uvicorn rix,
+  /usr/local/bin/python rix,
+  /usr/local/bin/python3 rix,
+  /usr/local/bin/python3.12 rix,
+
+  # Playwright uses its bundled Node driver. Chromium re-executes its main
+  # binary for renderer processes and may start its crash handler.
+  /usr/local/lib/python3.12/site-packages/playwright/driver/node rix,
+  /ms-playwright/**/chrome rix,
+  /ms-playwright/**/headless_shell rix,
+  /ms-playwright/**/chrome-headless-shell rix,
+  /ms-playwright/**/chrome_crashpad_handler rix,
+
   /opt/pageload-lab/** r,
-  /usr/** rix,
-  /lib/** rix,
-  /lib64/** rix,
-  /bin/** rix,
-  /sbin/** rix,
+  /ms-playwright/** rm,
+  /usr/local/lib/** rm,
+  /usr/lib/** rm,
+  /lib/** rm,
+  /lib64/** rm,
+  /usr/local/bin/** r,
+  /usr/bin/** r,
+  /usr/sbin/** r,
+  /usr/share/** r,
+  /usr/local/share/** r,
+  /bin/** r,
+  /sbin/** r,
   /etc/** r,
   /proc/** r,
   /sys/devices/system/cpu/** r,
@@ -21,6 +54,7 @@ profile pageload_lab flags=(attach_disconnected,mediate_deleted) {
   /dev/urandom r,
   /dev/shm/** rwk,
   /tmp/** rwk,
+  /data rw,
   /data/** rwk,
 
   capability setgid,

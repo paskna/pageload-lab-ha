@@ -37,6 +37,61 @@ jobs:
         working-directory: pageload-lab
         run: pytest --cov=app --cov-report=term-missing
 
+  container-smoke:
+    name: AppArmor container smoke test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install AppArmor parser
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes apparmor-utils
+      - name: Validate and load AppArmor profile
+        run: |
+          test "$(cat /sys/module/apparmor/parameters/enabled)" = "Y"
+          sudo apparmor_parser --skip-kernel-load --skip-cache pageload-lab/apparmor.txt
+          sudo apparmor_parser --replace pageload-lab/apparmor.txt
+      - name: Build smoke-test image
+        run: docker build --build-arg BUILD_VERSION=0.1.1 --tag pageload-lab:smoke pageload-lab
+      - name: Verify executable file layout
+        run: |
+          docker run --rm --entrypoint /usr/local/bin/python3.12 pageload-lab:smoke -c \
+            "import os; paths=['/opt/pageload-lab/run.sh','/usr/bin/env','/bin/sh','/usr/local/bin/python3.12','/usr/local/bin/uvicorn','/usr/local/lib/python3.12/site-packages/playwright/driver/node']; assert all(os.path.isfile(p) and os.access(p, os.X_OK) for p in paths); assert any(os.access(p, os.X_OK) for root, _, files in os.walk('/ms-playwright') for name in ('chrome','headless_shell','chrome-headless-shell') if (p := os.path.join(root, name)) in [os.path.join(root, f) for f in files])"
+      - name: Start container under PageLoad Lab AppArmor profile
+        run: |
+          docker volume create pageload-lab-smoke-data
+          docker run --detach --name pageload-lab-smoke \
+            --security-opt apparmor=pageload_lab \
+            --publish 127.0.0.1:8099:8099 \
+            --volume pageload-lab-smoke-data:/data \
+            pageload-lab:smoke
+      - name: Verify Uvicorn, health endpoint and Chromium
+        run: |
+          for attempt in $(seq 1 60); do
+            if curl --fail --silent http://127.0.0.1:8099/health > health.json; then
+              break
+            fi
+            if ! docker inspect --format '{{.State.Running}}' pageload-lab-smoke | grep --quiet true; then
+              docker logs pageload-lab-smoke
+              exit 1
+            fi
+            sleep 2
+          done
+          python3 -c "import json; h=json.load(open('health.json')); assert h['status']=='healthy', h; assert h['backend'] and h['database'] and h['scheduler'], h; assert h['browser_engine']['available'], h"
+          curl --fail --silent http://127.0.0.1:8099/api/system > system.json
+          python3 -c "import json; s=json.load(open('system.json')); assert s['chromium_version'] and s['chromium_version'] != 'Nicht verfügbar', s"
+      - name: Verify graceful SIGTERM shutdown
+        run: |
+          docker kill --signal=TERM pageload-lab-smoke
+          test "$(docker wait pageload-lab-smoke)" = "0"
+          docker logs pageload-lab-smoke
+      - name: Clean up smoke-test resources
+        if: always()
+        run: |
+          docker rm --force pageload-lab-smoke 2>/dev/null || true
+          docker volume rm pageload-lab-smoke-data 2>/dev/null || true
+          sudo apparmor_parser --remove pageload_lab 2>/dev/null || true
+
   init:
     runs-on: ubuntu-latest
     outputs:
@@ -63,7 +118,7 @@ jobs:
 
   build:
     name: Build ${{ matrix.arch }}
-    needs: [tests, init]
+    needs: [tests, container-smoke, init]
     runs-on: ${{ matrix.os }}
     permissions:
       contents: read
@@ -105,3 +160,26 @@ jobs:
           image-tags: |
             ${{ needs.init.outputs.version }}
             latest
+
+  verify-manifest:
+    name: Verify multi-architecture manifest
+    needs: [init, manifest]
+    if: needs.init.outputs.publish == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      packages: read
+    steps:
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Verify version and latest manifests
+        env:
+          VERSION: ${{ needs.init.outputs.version }}
+        run: |
+          for tag in "$VERSION" latest; do
+            docker buildx imagetools inspect --raw "ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/pageload-lab:${tag}" > manifest.json
+            jq --exit-status '[.manifests[].platform | select(.os == "linux") | .architecture] | index("amd64") != null and index("arm64") != null' manifest.json
+          done
