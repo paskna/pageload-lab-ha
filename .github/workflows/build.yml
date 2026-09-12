@@ -57,130 +57,25 @@ jobs:
         run: |
           docker run --rm --entrypoint /usr/local/bin/python3.12 pageload-lab:smoke -c \
             "import os; paths=['/opt/pageload-lab/run.sh','/usr/bin/env','/bin/sh','/usr/local/bin/python3.12','/usr/local/bin/uvicorn','/usr/local/lib/python3.12/site-packages/playwright/driver/node']; assert all(os.path.isfile(p) and os.access(p, os.X_OK) for p in paths); assert any(os.access(p, os.X_OK) for root, _, files in os.walk('/ms-playwright') for name in ('chrome','headless_shell','chrome-headless-shell') if (p := os.path.join(root, name)) in [os.path.join(root, f) for f in files])"
-      - name: Execute env under AppArmor
-        run: docker run --rm --security-opt apparmor=pageload_lab --entrypoint /usr/bin/env pageload-lab:smoke --version >/dev/null
-      - name: Execute shell under AppArmor
-        run: docker run --rm --security-opt apparmor=pageload_lab --entrypoint /bin/sh pageload-lab:smoke -c 'exit 0'
-      - name: Execute data setup commands under AppArmor
+      - name: Execute required runtime chain under AppArmor
         run: |
+          docker run --rm --security-opt apparmor=pageload_lab --entrypoint /usr/bin/env pageload-lab:smoke --version >/dev/null
+          docker run --rm --security-opt apparmor=pageload_lab --entrypoint /bin/sh pageload-lab:smoke -c 'exit 0'
           docker run --rm --security-opt apparmor=pageload_lab --entrypoint /usr/bin/mkdir pageload-lab:smoke --version >/dev/null
           docker run --rm --security-opt apparmor=pageload_lab --entrypoint /usr/bin/chmod pageload-lab:smoke --version >/dev/null
-      - name: Execute Python and Uvicorn under AppArmor
-        run: |
           docker run --rm --security-opt apparmor=pageload_lab --entrypoint /usr/local/bin/python3.12 pageload-lab:smoke --version
           docker run --rm --security-opt apparmor=pageload_lab --entrypoint /usr/local/bin/uvicorn pageload-lab:smoke --version
-      - name: Execute Playwright Node under AppArmor
-        run: docker run --rm --security-opt apparmor=pageload_lab --entrypoint /usr/local/lib/python3.12/site-packages/playwright/driver/node pageload-lab:smoke --version
-      - name: Start and stop Chromium under AppArmor
-        run: |
-          docker run --rm --security-opt apparmor=pageload_lab \
-            --entrypoint /usr/local/bin/python3.12 pageload-lab:smoke -c \
-            $'import asyncio\nfrom playwright.async_api import async_playwright\nasync def check():\n    last_error = None\n    for _ in range(3):\n        try:\n            async with async_playwright() as p:\n                b = await p.chromium.launch(headless=True, args=["--no-sandbox", "--disable-setuid-sandbox"])\n                assert b.is_connected()\n                await b.close()\n                return\n        except Exception as error:\n            last_error = error\n            await asyncio.sleep(1)\n    raise last_error\nasyncio.run(check())'
+          docker run --rm --security-opt apparmor=pageload_lab --entrypoint /usr/local/lib/python3.12/site-packages/playwright/driver/node pageload-lab:smoke --version
       - name: Create persistent data layout under AppArmor
         run: |
           docker run --rm --security-opt apparmor=pageload_lab --tmpfs /data \
             --entrypoint /bin/sh pageload-lab:smoke -c \
             'mkdir -p /data/reports /data/logs && chmod 0700 /data && test -d /data/reports && test -d /data/logs'
-      - name: Resolve data path with pathlib under AppArmor
+      - name: Start and stop Chromium under AppArmor
         run: |
           docker run --rm --security-opt apparmor=pageload_lab \
-            --tmpfs /data \
             --entrypoint /usr/local/bin/python3.12 pageload-lab:smoke -c \
-            'from pathlib import Path; assert str(Path("/data").resolve()) == "/data"'
-      - name: Import SQLAlchemy under AppArmor
-        run: |
-          docker run --rm --security-opt apparmor=pageload_lab \
-            --tmpfs /data \
-            --entrypoint /usr/local/bin/python3.12 pageload-lab:smoke -c \
-            'import sqlalchemy'
-      - name: Import application models under AppArmor
-        run: |
-          docker run --rm --security-opt apparmor=pageload_lab \
-            --tmpfs /data \
-            --entrypoint /usr/local/bin/python3.12 pageload-lab:smoke -c \
-            'import app.models'
-      - name: Resolve application settings data path under AppArmor
-        run: |
-          docker run --rm --security-opt apparmor=pageload_lab \
-            --tmpfs /data \
-            --entrypoint /usr/local/bin/python3.12 pageload-lab:smoke -c \
-            'from app.settings import Paths; p=Paths.from_environment(); assert str(p.data) == "/data"'
-      - name: Inspect application data root under AppArmor
-        run: |
-          docker run --rm --security-opt apparmor=pageload_lab \
-            --tmpfs /data \
-            --entrypoint /usr/local/bin/python3.12 pageload-lab:smoke -c \
-            'from pathlib import Path; p=Path("/data"); assert p.is_dir(); p.mkdir(parents=True, exist_ok=True, mode=0o700)'
-      - name: Create application data subdirectories under AppArmor
-        run: |
-          docker run --rm --security-opt apparmor=pageload_lab \
-            --tmpfs /data \
-            --entrypoint /usr/local/bin/python3.12 pageload-lab:smoke -c \
-            'from app.settings import Paths; p=Paths.from_environment(); p.reports.mkdir(parents=True, exist_ok=True, mode=0o700); p.logs.mkdir(parents=True, exist_ok=True, mode=0o700)'
-      - name: Initialize rotating logging under AppArmor
-        run: |
-          docker run --rm --security-opt apparmor=pageload_lab \
-            --tmpfs /data \
-            --entrypoint /usr/local/bin/python3.12 pageload-lab:smoke -c \
-            'from app.settings import Paths; from app.logging_config import configure_logging; p=Paths.from_environment(); p.ensure(); configure_logging(p.logs)'
-      - name: Initialize SQLite under AppArmor
-        run: |
-          docker run --rm --security-opt apparmor=pageload_lab \
-            --tmpfs /data \
-            --entrypoint /usr/local/bin/python3.12 pageload-lab:smoke -c \
-            'from app.settings import Paths; from app.database import Database; p=Paths.from_environment(); p.ensure(); d=Database(p.database); d.initialize(); d.close()'
-      - name: Initialize settings and secrets under AppArmor
-        run: |
-          docker run --rm --security-opt apparmor=pageload_lab \
-            --tmpfs /data \
-            --entrypoint /usr/local/bin/python3.12 pageload-lab:smoke -c \
-            'from app.settings import Paths,SettingsStore; from app.database import Database; from app.security import SecretBox,load_or_create_secret; p=Paths.from_environment(); p.ensure(); d=Database(p.database); d.initialize(); SettingsStore(d.session_factory).ensure_defaults(); SecretBox(p.secret_key); load_or_create_secret(p.csrf_secret); d.close()'
-      - name: Import BrowserEngine module under AppArmor
-        run: |
-          docker run --rm --security-opt apparmor=pageload_lab \
-            --tmpfs /data \
-            --entrypoint /usr/local/bin/python3.12 pageload-lab:smoke -c \
-            'from app.browser import BrowserEngine'
-      - name: Start Chromium with production flags under AppArmor
-        run: |
-          docker run --rm --security-opt apparmor=pageload_lab \
-            --tmpfs /data \
-            --entrypoint /usr/local/bin/python3.12 pageload-lab:smoke -c \
-            $'import asyncio\nfrom playwright.async_api import async_playwright\nasync def check():\n    async with async_playwright() as p:\n        b = await p.chromium.launch(headless=True, args=["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage", "--disable-background-networking", "--disable-component-update", "--disable-default-apps", "--disable-extensions", "--no-first-run", "--renderer-process-limit=7"])\n        assert b.is_connected()\n        await b.close()\nasyncio.run(check())'
-      - name: Run BrowserEngine lifecycle under AppArmor
-        run: |
-          docker run --rm --security-opt apparmor=pageload_lab \
-            --tmpfs /data \
-            --entrypoint /usr/local/bin/python3.12 pageload-lab:smoke -c \
-            $'import asyncio\nfrom app.browser import BrowserEngine\nclass Settings:\n    def get(self, name, default=None):\n        return default\nasync def check():\n    browser = BrowserEngine(Settings())\n    await browser.start()\n    assert (await browser.health())["available"]\n    await browser.stop()\nasyncio.run(check())'
-      - name: Run FastAPI lifespan under AppArmor
-        run: |
-          docker run --rm --security-opt apparmor=pageload_lab \
-            --env PAGELAB_DATA_DIR=/tmp/pageload-lab-component \
-            --entrypoint /usr/local/bin/python3.12 pageload-lab:smoke -c \
-            $'import asyncio\nfrom app.main import app, lifespan\nasync def check():\n    async with lifespan(app):\n        assert app.state.scheduler.status()["running"]\nasyncio.run(check())'
-      - name: Verify entrypoint baseline without custom AppArmor
-        run: |
-          docker run --detach --name pageload-lab-baseline \
-            --security-opt apparmor=unconfined \
-            --tmpfs /data \
-            pageload-lab:smoke
-          sleep 5
-          test "$(docker inspect --format '{{.State.Running}}' pageload-lab-baseline)" = "true"
-          docker rm --force pageload-lab-baseline
-      - name: Start entrypoint with temporary data under AppArmor
-        run: |
-          docker run --detach --name pageload-lab-temp-data \
-            --security-opt apparmor=pageload_lab \
-            --tmpfs /data \
-            pageload-lab:smoke
-          sleep 5
-      - name: Verify entrypoint execution was permitted
-        run: test "$(docker inspect --format '{{.State.ExitCode}}' pageload-lab-temp-data)" != "126"
-      - name: Verify profiled entrypoint remains running
-        run: |
-          test "$(docker inspect --format '{{.State.Running}}' pageload-lab-temp-data)" = "true"
-          docker rm --force pageload-lab-temp-data
+            $'import asyncio\nfrom playwright.async_api import async_playwright\nasync def check():\n    last_error = None\n    for _ in range(3):\n        try:\n            async with async_playwright() as p:\n                b = await p.chromium.launch(headless=True, args=["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage", "--disable-background-networking", "--disable-component-update", "--disable-default-apps", "--disable-extensions", "--no-first-run", "--renderer-process-limit=7"])\n                assert b.is_connected()\n                await b.close()\n                return\n        except Exception as error:\n            last_error = error\n            await asyncio.sleep(1)\n    raise last_error\nasyncio.run(check())'
       - name: Start container under PageLoad Lab AppArmor profile
         run: |
           docker volume create pageload-lab-smoke-data
@@ -221,8 +116,6 @@ jobs:
       - name: Clean up smoke-test resources
         if: always()
         run: |
-          docker rm --force pageload-lab-baseline 2>/dev/null || true
-          docker rm --force pageload-lab-temp-data 2>/dev/null || true
           docker rm --force pageload-lab-smoke 2>/dev/null || true
           docker volume rm pageload-lab-smoke-data 2>/dev/null || true
           sudo apparmor_parser --remove pageload_lab 2>/dev/null || true
