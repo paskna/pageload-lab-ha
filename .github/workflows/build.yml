@@ -141,6 +141,12 @@ jobs:
             --tmpfs /data \
             --entrypoint /usr/local/bin/python3.12 pageload-lab:smoke -c \
             'from app.browser import BrowserEngine'
+      - name: Start Chromium with production flags under AppArmor
+        run: |
+          docker run --rm --security-opt apparmor=pageload_lab \
+            --tmpfs /data \
+            --entrypoint /usr/local/bin/python3.12 pageload-lab:smoke -c \
+            $'import asyncio\nfrom playwright.async_api import async_playwright\nasync def check():\n    async with async_playwright() as p:\n        b = await p.chromium.launch(headless=True, args=["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage", "--disable-background-networking", "--disable-component-update", "--disable-default-apps", "--disable-extensions", "--no-first-run", "--renderer-process-limit=7"])\n        assert b.is_connected()\n        await b.close()\nasyncio.run(check())'
       - name: Run BrowserEngine lifecycle under AppArmor
         run: |
           docker run --rm --security-opt apparmor=pageload_lab \
