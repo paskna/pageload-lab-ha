@@ -84,25 +84,25 @@ jobs:
       - name: Initialize application paths under AppArmor
         run: |
           docker run --rm --security-opt apparmor=pageload_lab \
-            --env PAGELAB_DATA_DIR=/tmp/pageload-lab-component \
+            --tmpfs /data \
             --entrypoint /usr/local/bin/python3.12 pageload-lab:smoke -c \
             'from app.settings import Paths; p=Paths.from_environment(); p.ensure()'
       - name: Initialize rotating logging under AppArmor
         run: |
           docker run --rm --security-opt apparmor=pageload_lab \
-            --env PAGELAB_DATA_DIR=/tmp/pageload-lab-component \
+            --tmpfs /data \
             --entrypoint /usr/local/bin/python3.12 pageload-lab:smoke -c \
             'from app.settings import Paths; from app.logging_config import configure_logging; p=Paths.from_environment(); p.ensure(); configure_logging(p.logs)'
       - name: Initialize SQLite under AppArmor
         run: |
           docker run --rm --security-opt apparmor=pageload_lab \
-            --env PAGELAB_DATA_DIR=/tmp/pageload-lab-component \
+            --tmpfs /data \
             --entrypoint /usr/local/bin/python3.12 pageload-lab:smoke -c \
             'from app.settings import Paths; from app.database import Database; p=Paths.from_environment(); p.ensure(); d=Database(p.database); d.initialize(); d.close()'
       - name: Initialize settings and secrets under AppArmor
         run: |
           docker run --rm --security-opt apparmor=pageload_lab \
-            --env PAGELAB_DATA_DIR=/tmp/pageload-lab-component \
+            --tmpfs /data \
             --entrypoint /usr/local/bin/python3.12 pageload-lab:smoke -c \
             'from app.settings import Paths,SettingsStore; from app.database import Database; from app.security import SecretBox,load_or_create_secret; p=Paths.from_environment(); p.ensure(); d=Database(p.database); d.initialize(); SettingsStore(d.session_factory).ensure_defaults(); SecretBox(p.secret_key); load_or_create_secret(p.csrf_secret); d.close()'
       - name: Run FastAPI lifespan under AppArmor
@@ -115,7 +115,7 @@ jobs:
         run: |
           docker run --detach --name pageload-lab-baseline \
             --security-opt apparmor=unconfined \
-            --env PAGELAB_DATA_DIR=/tmp/pageload-lab-data \
+            --tmpfs /data \
             pageload-lab:smoke
           sleep 5
           test "$(docker inspect --format '{{.State.Running}}' pageload-lab-baseline)" = "true"
@@ -124,7 +124,7 @@ jobs:
         run: |
           docker run --detach --name pageload-lab-temp-data \
             --security-opt apparmor=pageload_lab \
-            --env PAGELAB_DATA_DIR=/tmp/pageload-lab-data \
+            --tmpfs /data \
             pageload-lab:smoke
           sleep 5
       - name: Verify entrypoint execution was permitted
