@@ -135,12 +135,18 @@ jobs:
             --tmpfs /data \
             --entrypoint /usr/local/bin/python3.12 pageload-lab:smoke -c \
             'from app.settings import Paths,SettingsStore; from app.database import Database; from app.security import SecretBox,load_or_create_secret; p=Paths.from_environment(); p.ensure(); d=Database(p.database); d.initialize(); SettingsStore(d.session_factory).ensure_defaults(); SecretBox(p.secret_key); load_or_create_secret(p.csrf_secret); d.close()'
+      - name: Run BrowserEngine lifecycle under AppArmor
+        run: |
+          docker run --rm --security-opt apparmor=pageload_lab \
+            --tmpfs /data \
+            --entrypoint /usr/local/bin/python3.12 pageload-lab:smoke -c \
+            $'import asyncio\nfrom app.browser import BrowserEngine\nclass Settings:\n    def get(self, name, default=None):\n        return default\nasync def check():\n    browser = BrowserEngine(Settings())\n    await browser.start()\n    assert (await browser.health())["available"]\n    await browser.stop()\nasyncio.run(check())'
       - name: Run FastAPI lifespan under AppArmor
         run: |
           docker run --rm --security-opt apparmor=pageload_lab \
             --env PAGELAB_DATA_DIR=/tmp/pageload-lab-component \
             --entrypoint /usr/local/bin/python3.12 pageload-lab:smoke -c \
-            $'import asyncio\nfrom app.main import app, lifespan\nasync def check():\n    async with lifespan(app):\n        assert app.state.scheduler.status()["running"]\n        assert (await app.state.browser.health())["available"]\nasyncio.run(check())'
+            $'import asyncio\nfrom app.main import app, lifespan\nasync def check():\n    async with lifespan(app):\n        assert app.state.scheduler.status()["running"]\nasyncio.run(check())'
       - name: Verify entrypoint baseline without custom AppArmor
         run: |
           docker run --detach --name pageload-lab-baseline \
