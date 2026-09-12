@@ -87,12 +87,18 @@ jobs:
             --tmpfs /data \
             --entrypoint /usr/local/bin/python3.12 pageload-lab:smoke -c \
             'from pathlib import Path; assert str(Path("/data").resolve()) == "/data"'
-      - name: Import SQLAlchemy models under AppArmor
+      - name: Import SQLAlchemy under AppArmor
         run: |
           docker run --rm --security-opt apparmor=pageload_lab \
             --tmpfs /data \
             --entrypoint /usr/local/bin/python3.12 pageload-lab:smoke -c \
-            'import sqlalchemy; import app.models'
+            'import sqlalchemy'
+      - name: Import application models under AppArmor
+        run: |
+          docker run --rm --security-opt apparmor=pageload_lab \
+            --tmpfs /data \
+            --entrypoint /usr/local/bin/python3.12 pageload-lab:smoke -c \
+            'import app.models'
       - name: Resolve application settings data path under AppArmor
         run: |
           docker run --rm --security-opt apparmor=pageload_lab \
