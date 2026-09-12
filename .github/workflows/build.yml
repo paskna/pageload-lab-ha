@@ -75,7 +75,7 @@ jobs:
         run: |
           docker run --rm --security-opt apparmor=pageload_lab \
             --entrypoint /usr/local/bin/python3.12 pageload-lab:smoke -c \
-            $'import asyncio\nfrom playwright.async_api import async_playwright\nasync def check():\n    p = await async_playwright().start()\n    b = await p.chromium.launch(headless=True, args=["--no-sandbox", "--disable-setuid-sandbox"])\n    assert b.is_connected()\n    await b.close()\n    await p.stop()\nasyncio.run(check())'
+            $'import asyncio\nfrom playwright.async_api import async_playwright\nasync def check():\n    async with async_playwright() as p:\n        b = await p.chromium.launch(headless=True, args=["--no-sandbox", "--disable-setuid-sandbox"])\n        assert b.is_connected()\n        await b.close()\nasyncio.run(check())'
       - name: Create persistent data layout under AppArmor
         run: |
           docker run --rm --security-opt apparmor=pageload_lab --tmpfs /data \
