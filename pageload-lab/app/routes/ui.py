@@ -14,7 +14,11 @@ templates = Jinja2Templates(directory=str(Path(__file__).resolve().parent.parent
 
 
 def context(request: Request, active: str, **values: object) -> dict[str, object]:
-    root = request.scope.get("root_path", "").rstrip("/")
+    # Supervisor Ingress normally supplies ``root_path``.  Some HA versions
+    # omit the header on the first document request; a relative base keeps
+    # onboarding assets inside the current Ingress mount instead of falling
+    # back to the host root (which makes the page appear completely unstyled).
+    root = request.scope.get("root_path", "").rstrip("/") or "."
     return {
         "request": request,
         "active": active,

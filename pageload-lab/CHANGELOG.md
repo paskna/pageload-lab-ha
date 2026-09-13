@@ -2,6 +2,13 @@
 
 Alle wesentlichen Änderungen werden nach Keep-a-Changelog-Grundsätzen dokumentiert. Das Projekt verwendet Semantic Versioning.
 
+## 0.1.3 – 2026-09-13
+
+### Fixed
+
+- Ingress-Assets verwenden beim ersten Request ohne `root_path` einen relativen Basis-Pfad.
+- Onboarding bleibt dadurch inklusive CSS und JavaScript innerhalb des Home-Assistant-Ingress erreichbar.
+
 ## 0.1.2 – 2026-09-13
 
 ### Fixed
