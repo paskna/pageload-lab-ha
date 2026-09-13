@@ -131,7 +131,11 @@ jobs:
         run: |
           version="$(python3 -c "import yaml; print(yaml.safe_load(open('pageload-lab/config.yaml'))['version'])")"
           echo "version=${version}" >> "$GITHUB_OUTPUT"
-          if [[ "${GITHUB_EVENT_NAME}" == "release" ]]; then
+          # Publish immutable versioned images when a release tag is pushed.
+          # Keeping release-event support allows a later GitHub Release to
+          # rebuild the same tag, while tag pushes make the HA repository
+          # installable immediately after publishing vX.Y.Z.
+          if [[ "${GITHUB_REF_TYPE}" == "tag" && "${GITHUB_REF_NAME}" == v* ]] || [[ "${GITHUB_EVENT_NAME}" == "release" ]]; then
             echo "publish=true" >> "$GITHUB_OUTPUT"
           else
             echo "publish=false" >> "$GITHUB_OUTPUT"
