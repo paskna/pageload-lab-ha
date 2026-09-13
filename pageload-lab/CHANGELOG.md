@@ -2,6 +2,13 @@
 
 Alle wesentlichen Änderungen werden nach Keep-a-Changelog-Grundsätzen dokumentiert. Das Projekt verwendet Semantic Versioning.
 
+## 0.1.2 – 2026-09-13
+
+### Fixed
+
+- Health-Endpoint funktioniert auch unter dem restriktiven Home-Assistant-AppArmor-Profil.
+- Die optionale Zombie-Prozessprüfung fällt bei nicht lesbarem `/proc` sicher auf keine beobachtbaren Zombies zurück.
+
 ## 0.1.1 – 2026-09-12
 
 ### Fixed

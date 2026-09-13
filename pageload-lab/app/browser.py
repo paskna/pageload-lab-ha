@@ -178,7 +178,11 @@ class BrowserEngine:
                         zombies.append(child)
                 except (psutil.NoSuchProcess, psutil.AccessDenied):
                     continue
-        except (psutil.NoSuchProcess, psutil.AccessDenied):
+        except (psutil.NoSuchProcess, psutil.AccessDenied, PermissionError):
+            # Home Assistant's AppArmor profile intentionally hides the
+            # global /proc process listing.  Zombie detection is a safety
+            # enhancement, not a health prerequisite; treat an inaccessible
+            # process table as "no observable zombies" and keep the API up.
             pass
         return zombies
 

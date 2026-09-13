@@ -12,6 +12,15 @@ class MemorySettings:
     def get(self,key,default=None): return self.values.get(key,default)
 
 
+def test_zombie_probe_tolerates_restricted_proc(monkeypatch):
+    class RestrictedProcess:
+        def children(self, recursive=False):
+            raise PermissionError("/proc is restricted by AppArmor")
+
+    monkeypatch.setattr("app.browser.psutil.Process", RestrictedProcess)
+    assert BrowserEngine._zombie_processes() == []
+
+
 @pytest.fixture(scope='module')
 def test_server():
     executed=threading.Event()
