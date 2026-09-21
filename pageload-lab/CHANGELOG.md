@@ -2,6 +2,14 @@
 
 Alle wesentlichen Änderungen werden nach Keep-a-Changelog-Grundsätzen dokumentiert. Das Projekt verwendet Semantic Versioning.
 
+## 0.1.4 – 2026-09-21
+
+### Fixed
+
+- Ingress-Basis wird auch ohne abschließenden URL-Slash zuverlässig erkannt.
+- CSS, JavaScript und API-Aufrufe bleiben innerhalb des Home-Assistant-Ingress-Pfads.
+- CSP-Nonce für den minimalen Ingress-Bootstrap ergänzt.
+
 ## 0.1.3 – 2026-09-13
 
 ### Fixed

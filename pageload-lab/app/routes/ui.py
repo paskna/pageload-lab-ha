@@ -25,6 +25,7 @@ def context(request: Request, active: str, **values: object) -> dict[str, object
         "base_path": root,
         "version": request.app.state.version,
         "csrf_token": request.app.state.csrf_token,
+        "csp_nonce": getattr(request.state, "csp_nonce", ""),
         **values,
     }
 

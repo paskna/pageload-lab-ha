@@ -7,6 +7,7 @@ import gc
 import json
 import logging
 import os
+import secrets
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from pathlib import Path
@@ -147,6 +148,7 @@ async def ingress_and_security(request: Request, call_next: object):
     # The UI is intentionally reachable only through the Supervisor Ingress
     # gateway. Loopback is reserved for the container health check.
     client_host = request.client.host if request.client else ""
+    request.state.csp_nonce = secrets.token_urlsafe(18)
     testing = getattr(request.app.state, "testing", False)
     if not testing and client_host not in {"172.30.32.2", "127.0.0.1", "::1"}:
         return JSONResponse({"error": "Zugriff ist nur über Home Assistant Ingress möglich."}, status_code=403)
@@ -162,7 +164,7 @@ async def ingress_and_security(request: Request, call_next: object):
     response.headers["X-Frame-Options"] = "SAMEORIGIN"
     response.headers["Referrer-Policy"] = "same-origin"
     response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
-    response.headers["Content-Security-Policy"] = "default-src 'self'; style-src 'self'; script-src 'self'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'self'"
+    response.headers["Content-Security-Policy"] = f"default-src 'self'; style-src 'self'; script-src 'self' 'nonce-{request.state.csp_nonce}'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'self'"
     return response
 
 

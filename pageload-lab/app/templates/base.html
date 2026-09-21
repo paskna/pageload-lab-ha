@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="color-scheme" content="light dark">
   <meta name="pageload-csrf" content="{{ csrf_token }}">
-  <base href="{{ base_path }}/">
+  <script nonce="{{ csp_nonce }}">(function(){var p=location.pathname,m='/api/hassio_ingress/',i=p.indexOf(m),root='./';if(i>=0){var rest=p.slice(i+m.length),token=rest.split('/')[0];if(token)root=p.slice(0,i)+m+token+'/';}document.write('<base href="'+root.replace(/&/g,'&amp;').replace(/"/g,'&quot;')+'">');})();</script>
   <title>{% block title %}PageLoad Lab{% endblock %}</title>
-  <link rel="stylesheet" href="{{ base_path }}/static/app.css">
+  <link rel="stylesheet" href="static/app.css">
 </head>
 <body data-page="{% block page %}base{% endblock %}">
   <aside class="sidebar" id="sidebar">
@@ -36,6 +36,6 @@
   </div>
   <div class="sidebar-scrim" id="sidebar-scrim"></div>
   <div class="toast-region" id="toasts" aria-live="polite"></div>
-  <script src="{{ base_path }}/static/app.js" defer></script>
+  <script src="static/app.js" defer></script>
 </body>
 </html>
