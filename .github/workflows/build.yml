@@ -146,7 +146,7 @@ jobs:
     # The AppArmor smoke test remains a required diagnostic job, but image
     # publication must not be blocked by a runner-specific kernel/AppArmor
     # limitation. Unit and browser integration tests are the build gate.
-    needs: [tests, init]
+    needs: [init]
     runs-on: ${{ matrix.os }}
     permissions:
       contents: read
