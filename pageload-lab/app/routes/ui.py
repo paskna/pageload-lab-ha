@@ -11,6 +11,7 @@ from fastapi.templating import Jinja2Templates
 
 router = APIRouter()
 templates = Jinja2Templates(directory=str(Path(__file__).resolve().parent.parent / "templates"))
+STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
 
 
 def context(request: Request, active: str, **values: object) -> dict[str, object]:
@@ -26,6 +27,8 @@ def context(request: Request, active: str, **values: object) -> dict[str, object
         "version": request.app.state.version,
         "csrf_token": request.app.state.csrf_token,
         "csp_nonce": getattr(request.state, "csp_nonce", ""),
+        "app_css": (STATIC_DIR / "app.css").read_text(encoding="utf-8"),
+        "app_js": (STATIC_DIR / "app.js").read_text(encoding="utf-8"),
         **values,
     }
 

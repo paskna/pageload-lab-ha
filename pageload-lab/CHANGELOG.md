@@ -2,6 +2,13 @@
 
 Alle wesentlichen Änderungen werden nach Keep-a-Changelog-Grundsätzen dokumentiert. Das Projekt verwendet Semantic Versioning.
 
+## 0.1.6 – 2026-09-21
+
+### Fixed
+
+- CSS und JavaScript werden zusätzlich direkt im HTML mit CSP-Nonce eingebettet.
+- Die Oberfläche bleibt dadurch auch bei nicht erreichbaren Ingress-Static-Pfaden vollständig nutzbar.
+
 ## 0.1.5 – 2026-09-21
 
 ### Fixed

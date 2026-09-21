@@ -7,7 +7,7 @@
   <meta name="pageload-csrf" content="{{ csrf_token }}">
   <script nonce="{{ csp_nonce }}">(function(){var p=location.pathname,m='/api/hassio_ingress/',i=p.indexOf(m),root='./';if(i>=0){var rest=p.slice(i+m.length),token=rest.split('/')[0];if(token)root=p.slice(0,i)+m+token+'/';}document.write('<base href="'+root.replace(/&/g,'&amp;').replace(/"/g,'&quot;')+'">');})();</script>
   <title>{% block title %}PageLoad Lab{% endblock %}</title>
-  <link rel="stylesheet" href="static/app.css">
+  <style nonce="{{ csp_nonce }}">{{ app_css | safe }}</style>
 </head>
 <body data-page="{% block page %}base{% endblock %}">
   <aside class="sidebar" id="sidebar">
@@ -36,6 +36,6 @@
   </div>
   <div class="sidebar-scrim" id="sidebar-scrim"></div>
   <div class="toast-region" id="toasts" aria-live="polite"></div>
-  <script src="static/app.js" defer></script>
+  <script nonce="{{ csp_nonce }}">{{ app_js | safe }}</script>
 </body>
 </html>

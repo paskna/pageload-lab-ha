@@ -10,7 +10,9 @@ def test_ingress_ui_and_api(tmp_path, monkeypatch):
         with TestClient(app) as client:
             response=client.get('/',headers={'x-ingress-path':'/api/hassio_ingress/token'})
             assert response.status_code==200
-            assert 'href="static/app.css"' in response.text
+            assert '<style nonce=' in response.text
+            assert '--bg:' in response.text
+            assert '<script nonce=' in response.text
             assert 'name="csrf_token"' in response.text
             completed = client.post('/', data={
                 'authorization_confirmed': 'on',
