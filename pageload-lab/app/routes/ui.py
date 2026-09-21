@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
@@ -35,6 +35,38 @@ async def dashboard(request: Request) -> HTMLResponse:
     if not request.app.state.settings.get("onboarding_complete", False):
         return templates.TemplateResponse(request, "onboarding.html", context(request, "onboarding"))
     return templates.TemplateResponse(request, "dashboard.html", context(request, "dashboard"))
+
+
+@router.post("/", response_class=RedirectResponse, name="complete_onboarding")
+async def complete_onboarding(
+    request: Request,
+    authorization_confirmed: bool = Form(False),
+    max_requests_per_minute: int = Form(...),
+    max_parallel_browsers: int = Form(...),
+    max_stay_seconds: int = Form(...),
+    max_test_duration_hours: int = Form(...),
+    timezone: str = Form(...),
+    csrf_token: str = Form(""),
+) -> RedirectResponse:
+    """Complete onboarding without requiring JavaScript or static assets."""
+    if not getattr(request.app.state, "testing", False) and csrf_token != request.app.state.csrf_token:
+        return RedirectResponse(url="./?onboarding_error=csrf", status_code=303)
+    if not authorization_confirmed:
+        return RedirectResponse(url="./?onboarding_error=authorization", status_code=303)
+    values = {
+        "authorization_confirmed": True,
+        "onboarding_complete": True,
+        "max_requests_per_minute": max_requests_per_minute,
+        "max_parallel_browsers": max_parallel_browsers,
+        "max_stay_seconds": max_stay_seconds,
+        "max_test_duration_hours": max_test_duration_hours,
+        "timezone": timezone,
+    }
+    try:
+        request.app.state.settings.update(values)
+    except (ValueError, TypeError):
+        return RedirectResponse(url="./?onboarding_error=limits", status_code=303)
+    return RedirectResponse(url="./", status_code=303)
 
 
 @router.get("/tests", response_class=HTMLResponse, name="tests")

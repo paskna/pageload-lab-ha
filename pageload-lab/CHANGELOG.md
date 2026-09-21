@@ -2,6 +2,13 @@
 
 Alle wesentlichen Änderungen werden nach Keep-a-Changelog-Grundsätzen dokumentiert. Das Projekt verwendet Semantic Versioning.
 
+## 0.1.5 – 2026-09-21
+
+### Fixed
+
+- Onboarding kann ohne JavaScript über einen sicheren serverseitigen Formular-POST abgeschlossen werden.
+- Regressionstest für den vollständigen Einrichtungsablauf ergänzt.
+
 ## 0.1.4 – 2026-09-21
 
 ### Fixed

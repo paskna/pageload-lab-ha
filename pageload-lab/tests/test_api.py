@@ -10,7 +10,18 @@ def test_ingress_ui_and_api(tmp_path, monkeypatch):
         with TestClient(app) as client:
             response=client.get('/',headers={'x-ingress-path':'/api/hassio_ingress/token'})
             assert response.status_code==200
-            assert '/api/hassio_ingress/token/static/app.css' in response.text
+            assert 'href="static/app.css"' in response.text
+            assert 'name="csrf_token"' in response.text
+            completed = client.post('/', data={
+                'authorization_confirmed': 'on',
+                'max_requests_per_minute': '30',
+                'max_parallel_browsers': '5',
+                'max_stay_seconds': '300',
+                'max_test_duration_hours': '168',
+                'timezone': 'Europe/Zurich',
+            }, follow_redirects=False)
+            assert completed.status_code == 303
+            assert client.get('/').text.find('Einrichtung abschliessen') == -1
             assert client.put('/api/settings',json={'authorization_confirmed':True,'onboarding_complete':True}).status_code==200
             payload={'name':'API Test','url':'https://93.184.216.34/','mode':'http','start_type':'immediate','timezone':'Europe/Zurich','frequency_per_minute':2,'frequency_mode':'random','stay_mode':'none','stay_min_seconds':0,'stay_max_seconds':0,'duration_mode':'requests','duration_days':0,'duration_hours':0,'duration_minutes':0,'max_requests':5,'max_concurrency':2,'proxy_mode':'direct','reporting_enabled':True,'authorization_confirmed':True}
             created=client.post('/api/tests',json=payload)

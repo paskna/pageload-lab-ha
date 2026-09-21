@@ -1,4 +1,4 @@
-# PageLoad Lab 0.1.4 – Betriebshandbuch
+# PageLoad Lab 0.1.5 – Betriebshandbuch
 
 ## Zweck und Verantwortung
 
@@ -96,7 +96,7 @@ Das Dockerfile verwendet explizit `python:3.12.11-slim-bookworm`. Die reproduzie
 
 Der Workflow `.github/workflows/build.yml` führt Unit- und echte Chromium-Integrationstests aus, erstellt über die aktuellen Home-Assistant-Builder-Composite-Actions getrennte `aarch64`- und `amd64`-Images und veröffentlicht bei einem GitHub Release ein signiertes Multi-Arch-Manifest:
 
-`ghcr.io/paskna/pageload-lab:0.1.4`
+`ghcr.io/paskna/pageload-lab:0.1.5`
 
 Für lokale Entwicklung kann direkt gebaut werden:
 
